@@ -1,20 +1,29 @@
 'use strict';
 
-/* This is an origin request function */
+const https = require("https");
+
+/* This is a viewer request function */
 exports.handler = (event, context, callback) => {
-    const request = event.Records[0].cf.request;
-
-    const host = request.headers.host[0].value;
+    const req = event.Records[0].cf.request;
+    const host = req.headers.host[0].value;
     const projectID = host.split(".")[0];
-
-    if(projectID != "cdn") {
-        const newUri = "/" + projectID + request.uri;
-
-        console.log("Input: ", host + request.uri);
-        console.log("Output: ", host + newUri);
-
-        request.uri = newUri;
+    if(projectID === "cdn") {
+        callback(null, req);
+        return
     }
 
-    callback(null, request);
+    const pushUrl = "https://cdn.knik.co/" + projectID + "/push.json";
+    https.get(pushUrl, (res) => {
+        let body = "";
+
+        res.on("data", data => {
+            body += data;
+        });
+
+        res.on("end", () => {
+            body = JSON.parse(body);
+            req.uri = "/" + projectID + "/" + body.key + req.uri;
+            callback(null, req);
+        });
+    });
 };
