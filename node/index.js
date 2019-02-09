@@ -7,6 +7,10 @@ exports.handler = (event, context, callback) => {
     const req = event.Records[0].cf.request;
     const host = req.headers.host[0].value;
     const projectID = host.split(".")[0];
+    if(req.uri === "/") {
+        req.uri = "/index.html";
+    }
+
     if(projectID === "cdn") {
         callback(null, req);
         return
