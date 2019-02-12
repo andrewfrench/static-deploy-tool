@@ -5,18 +5,13 @@ const https = require("https");
 /* This is a viewer request function */
 exports.handler = (event, context, callback) => {
     const req = event.Records[0].cf.request;
-    const host = req.headers.host[0].value;
-    const projectID = host.split(".")[0];
-    if(req.uri === "/") {
-        req.uri = "/index.html";
+    let obj = req.uri;
+    const projectID = req.headers.host[0].value.split(".")[0];
+    if(obj.endsWith("/")) {
+        obj += "index.html";
     }
 
-    if(projectID === "cdn") {
-        callback(null, req);
-        return
-    }
-
-    const pushUrl = "https://cdn.knik.co/" + projectID + "/push.json";
+    const pushUrl = "https://d1xjdxqcukhxxf.cloudfront.net/" + projectID + "/latest.json";
     https.get(pushUrl, (res) => {
         let body = "";
 
@@ -25,8 +20,7 @@ exports.handler = (event, context, callback) => {
         });
 
         res.on("end", () => {
-            body = JSON.parse(body);
-            req.uri = "/" + projectID + "/" + body.key + req.uri;
+            req.uri = "/" + projectID + "/" + JSON.parse(body)["t"] + obj;
             callback(null, req);
         });
     });
