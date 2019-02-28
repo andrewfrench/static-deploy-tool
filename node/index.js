@@ -1,18 +1,13 @@
 'use strict';
 
-const https = require("https");
+const http = require("http");
 
 /* This is a viewer request function */
 exports.handler = (event, context, callback) => {
     const req = event.Records[0].cf.request;
-    let obj = req.uri;
     const projectID = req.headers.host[0].value.split(".")[0];
-    if(obj.endsWith("/")) {
-        obj += "index.html";
-    }
-
-    const pushUrl = "https://d1xjdxqcukhxxf.cloudfront.net/" + projectID + "/latest.json";
-    https.get(pushUrl, (res) => {
+    const pushUrl = "http://d1xjdxqcukhxxf.cloudfront.net/" + projectID + "/latest.json";
+    http.get(pushUrl, (res) => {
         let body = "";
 
         res.on("data", data => {
@@ -20,7 +15,7 @@ exports.handler = (event, context, callback) => {
         });
 
         res.on("end", () => {
-            req.uri = "/" + projectID + "/" + JSON.parse(body)["t"] + obj;
+            req.uri = "/" + projectID + "/" + JSON.parse(body)["t"] + req.uri;
             callback(null, req);
         });
     });
